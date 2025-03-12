@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
+  <metadata>
+    <id>AUV2025</id>
+    <version>1.0.0</version>
+    <authors>AUV2025</authors>
+    <description>Package Description</description>
+    <dependencies>
+      <group targetFramework="net6.0-windows7.0">
+        <dependency id="STTech.BytesIO.Tcp" version="2.14.6" exclude="Build,Analyzers" />
+      </group>
+    </dependencies>
+    <frameworkReferences>
+      <group targetFramework="net6.0-windows7.0">
+        <frameworkReference name="Microsoft.WindowsDesktop.App.WindowsForms" />
+      </group>
+    </frameworkReferences>
+  </metadata>
+  <files>
+    <file src="C:\Users\Sigma\source\auv\AUV2025\bin\Debug\net6.0-windows\AUV2025.runtimeconfig.json" target="lib\net6.0-windows7.0\AUV2025.runtimeconfig.json" />
+    <file src="C:\Users\Sigma\source\auv\AUV2025\bin\Debug\net6.0-windows\AUV2025.dll" target="lib\net6.0-windows7.0\AUV2025.dll" />
+  </files>
+</package>
