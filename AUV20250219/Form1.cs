@@ -497,22 +497,22 @@ namespace AUV2025
                 }
                 if (a[3] != 0)
                 {
-                    string sendtext = $"@MRB{comboBox3.SelectedIndex + 1} $";
+                    string sendtext = $"@MRB{comboBox3.SelectedIndex + 1}$";
                     client.Send(sendtext.GetBytes());
                 }
                 if (a[0] != 0)
                 {
-                    string sendtext = $"@MRF{comboBox3.SelectedIndex + 1} $";
+                    string sendtext = $"@MRF{comboBox3.SelectedIndex + 1}$";
                     client.Send(sendtext.GetBytes());
                 }
                 if (a[2] != 0)
                 {
-                    string sendtext = $"@MRU{comboBox3.SelectedIndex + 1} $";
+                    string sendtext = $"@MRU{comboBox3.SelectedIndex + 1}$";
                     client.Send(sendtext.GetBytes());
                 }
                 if (a[1] != 0)
                 {
-                    string sendtext = $"@MRD{comboBox3.SelectedIndex + 1} $";
+                    string sendtext = $"@MRD{comboBox3.SelectedIndex + 1}$";
                     client.Send(sendtext.GetBytes());
                 }
 
@@ -651,7 +651,7 @@ namespace AUV2025
             if (angleDeg < 0)
                 angleDeg += 360;
 
-            // 根据角度进行 8 分区
+            // 根据角度进行 4 分区
             int partition = (int)((angleDeg + 22.5) / 90) % 4;
 
             return ((int)norm, partition);
