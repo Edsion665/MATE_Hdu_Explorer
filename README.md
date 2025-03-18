@@ -6,7 +6,6 @@
 
 ## 基本说明
 -本代码库基于SGA库由杭州电子科技大学MATE团队编写，用于2025 MATE Explorer级比赛的代码上传和上位机迭代保存  
->>>>>>>>> Temporary merge branch 2
 
 ## 开发者
 -HDU MARINE MACHINE  
