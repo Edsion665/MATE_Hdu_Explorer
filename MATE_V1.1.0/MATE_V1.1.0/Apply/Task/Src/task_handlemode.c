@@ -24,7 +24,7 @@ void Task_HandleMode_Process(HandleModeInfo HMInfo)
 				switch((int)HMInfo.fNum[0])
 				{
 					case 0:{                                //右
-						x_y_z_pitch |= 0x40;
+						left_rocker = 3;    
 						break;
 					}
 					case 1:{                                //右前
@@ -42,7 +42,7 @@ void Task_HandleMode_Process(HandleModeInfo HMInfo)
 						break;
 					}
 					case 4:{                                //左
-						x_y_z_pitch |= 0x80;
+						left_rocker = 4;
 						break;
 					}
 					case 5:{                                //左后
@@ -65,8 +65,8 @@ void Task_HandleMode_Process(HandleModeInfo HMInfo)
 			{
 				switch((int)HMInfo.fNum[0])
 				{
-					case 0:{                               
-						left_rocker = 3;                   //右转
+					case 0:{             
+						x_y_z_pitch |= 0x40;               //右转
 						break;
 					}
 					case 1:{    
@@ -84,7 +84,7 @@ void Task_HandleMode_Process(HandleModeInfo HMInfo)
 						}
 					}
 					case 2:{                               
-						left_rocker = 4;                  //左转
+						x_y_z_pitch |= 0x80;                  //左转
 						break;
 					}
 					case 3:{         
