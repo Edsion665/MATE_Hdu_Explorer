@@ -1,0 +1,8 @@
+{
+    "files.associations": {
+        "config.h": "c",
+        "task_conf.h": "c",
+        "task_servocontrol.h": "c",
+        "task_depthcontrol.h": "c"
+    }
+}

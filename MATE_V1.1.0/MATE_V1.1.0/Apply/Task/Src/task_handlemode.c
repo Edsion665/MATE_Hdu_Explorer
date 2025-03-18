@@ -143,10 +143,15 @@ void Task_HandleMode_Process(HandleModeInfo HMInfo)
 						right_rocker = 3;
 						break;
 					}
-					case 8:{								//慢速状态切换
-					//奇偶计次
-						SpeedMode = (SpeedMode + 1) % 2;  // 0 ⇄ 1
-						break;
+					case 8:{								
+						//奇偶计次
+							// SpeedMode = (SpeedMode + 1) % 2;
+							PitchFlag = (PitchFlag + 1) % 2;    // 0 ⇄ 1
+							if(!PitchFlag)
+							{
+								PitchPID_out = 0.0;
+							}
+							break;
 					}
 					case 9:{								//定深开关键
 						//计数器
@@ -157,7 +162,7 @@ void Task_HandleMode_Process(HandleModeInfo HMInfo)
 						else
 						{
 							DepthFlag &= ~0x02;//清除
-							PIDOut = 0.0;
+							DepthPID_out = 0.0;
 							DCInfo.setDepth = MS5837.fDepth;
 							rt_mq_send(DepthControlmq,&DCInfo,sizeof(DepthControlInfo));
 						}

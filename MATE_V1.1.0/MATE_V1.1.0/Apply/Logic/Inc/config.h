@@ -37,6 +37,14 @@ extern volatile char cnt;
 
 extern volatile float PIDOut;
 
+extern volatile float DepthPID_out;
+
+extern volatile float PitchPID_out;
+
+extern volatile float DepthFliter;
+
+extern volatile char PitchFlag;
+
 extern Expect_angle Exp_AngleInfo;
 
 extern tagGPIO_T demoGPIO[];

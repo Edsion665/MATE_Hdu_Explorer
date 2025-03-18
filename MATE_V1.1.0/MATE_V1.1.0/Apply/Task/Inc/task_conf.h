@@ -14,4 +14,5 @@
 #include "task_balance.h"
 #include "task_motioncontrol.h"
 #include "task_pH_outcome.h"
+#include "task_servocontrol.h"
 #endif

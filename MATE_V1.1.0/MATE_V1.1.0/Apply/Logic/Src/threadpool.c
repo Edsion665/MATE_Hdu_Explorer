@@ -56,7 +56,7 @@ void JY901SReadThread(void* paramenter)
                 //数据转换
                 OCD_JY901_DataConversion(&JY901S);
                 //打印角速度和加速度
-                 //OCD_JY901_Printf(&JY901S);
+                //  OCD_JY901_Printf(&JY901S);
             }
 		}
         Drv_Delay_Ms(100);    //让出CPU资源给其它线程
@@ -64,7 +64,7 @@ void JY901SReadThread(void* paramenter)
     }
 }
 
-/* 读取MS5837数据线程▼ */
+/* 读取MS5837数据线程 */
 void MS5837ReadThread(void* paramenter)
 {
     DepthControlInfo DCInfo;
@@ -75,7 +75,7 @@ void MS5837ReadThread(void* paramenter)
             MS5837.fDepth = 0;
         //printf("M %0.2f\r\n",MS5837.fDepth);
         // printf("T %0.2f\r\n",MS5837.fTemperature);
-				float DepthFliter = Median_Flitering_Output(MS5837.fDepth);
+			DepthFliter = Median_Flitering_Output(MS5837.fDepth);
         if(cnt == 0)	//开机时把当前位置置为目标位置
         {
             cnt = 1;
@@ -138,7 +138,17 @@ void MotionControl(void* paramenter)
 {
     while(1)
     {
-		Task_Motion_Process();
+		//将抽屉数组计算出来，存储PWMInfo，设定PWMInfo宏观值
+	    HandleMode_data_handle();
+        //限制最大输出
+        PWNOutput_limit();
+        
+        //将反的PWM输出增大倍数
+        Thruster_nagative_data_handle(1.2);
+        
+        //设置推进器PWN输出
+        Task_Thruster_AllStart(PWMInfo.PWMout);
+
         Drv_Delay_Ms(100);
     }
 }
@@ -178,8 +188,7 @@ void AUTO_MODE(void* paramenter)
             Task_AutoMode_Process(AMInfo);
         }
 
-        // printf("AUTO\r\n");
-        // Drv_Delay_Ms(1000);
+        
         Drv_Delay_Ms(1);    //让出CPU资源给低优先级线程
     }
 }
@@ -190,26 +199,37 @@ void DepthControl(void* paramenter)
     DepthControlInfo DCInfo;
     float ExpDepth = 0.0f;
     float CurrDepth = 0.0f;
-
+    char ExpPitchSet = 0;
+	float Curr_pitch = 0.0f;
+    float Exp_pitch = 0.0f;
     while(1)
     {
         //定深数据消息队列接收到数据，将开始定深控制
         if(rt_mq_recv(DepthControlmq,&DCInfo,sizeof(DepthControlInfo),RT_WAITING_NO) == RT_EOK)
         {
             ExpDepth = DCInfo.setDepth;
-            //printf("Exp:%0.2f\r\n",ExpDepth);
+            
         }
+		
+        if (!(PitchFlag && ExpPitchSet))
+        {
+             Exp_pitch = Curr_pitch;  // 记录当前角度为目标角度
+             ExpPitchSet = 1;         // 标记已经设置过
+        }
+//        printf("CurrPitch %f\n\r",Curr_pitch);
 
-        //printf("Exp:%0.2f\r\n",ExpDepth);
-        //获取当前深度
-        CurrDepth = MS5837.fDepth;
+        //获取当前深度 使用中值滤波消除毛刺
+        CurrDepth =  DepthFliter;
+		//由于roll值和pitch值在解码时为反相，故交叉支配
+        //获取当前pitch值
+		Curr_pitch = JY901S.stcAngle.ConRoll;
         //定深控制函数，开关打开开启定深
         if(DepthFlag & 0x02)
-			task_DepthControl_Process(CurrDepth,ExpDepth);
-		
-		printf("%f",PIDOut);
-
-        Drv_Delay_Ms(60);    //每隔一段时间进行一次定深
+			task_DepthControl_Process(CurrDepth,ExpDepth);//定深PID计算得到PIDout 优化处是把PIDout以消息队列传到motioncontrol中
+        //俯仰标志位置1，将开始俯仰控制
+        if(PitchFlag)
+            task_pitch_data_handle(Curr_pitch,Exp_pitch);
+        Drv_Delay_Ms(60);    //每隔一段时间进行一次
     }
 }
 
@@ -217,113 +237,23 @@ void DepthControl(void* paramenter)
 /*俯仰、机械爪及探照灯*/
 void PlusControl(void* paramenter)
 {
-	PWMInfo.PWMout[claw_shouder_Speed] = 1000;
-	PWMInfo.PWMout[claw_elbow_Speed] = Servo_Angle_To_HightTime(CLAW_CATCH_STOP_ANGLE);
-	PWMInfo.PWMout[claw_catchSpeed] = 1900;
-    PWMInfo.PWMout[light_level_1] = 1500;
-	Mode_control |= 0x80; //Mode_control第八位为未初始化标志位
+	Servo_Init(&PWMInfo);
     while(1)                                                                    
-    {
-		//左摇杆上下控制大臂
-		if(left_rocker == 0)
-        {
-			;
-        }
-		else if(left_rocker == 2)
-		{
-			PWMInfo.PWMout[claw_shouder_Speed] += 5;
-			if(PWMInfo.PWMout[claw_shouder_Speed] > 1170)
-            PWMInfo.PWMout[claw_shouder_Speed] = 1170;
-			if(PWMInfo.PWMout[claw_shouder_Speed] > 2500) 
-            PWMInfo.PWMout[claw_shouder_Speed] = 2500;
-			if(PWMInfo.PWMout[claw_shouder_Speed] < 500) 
-            PWMInfo.PWMout[claw_shouder_Speed] = 500;
-		}
-		else if(left_rocker == 1)
-		{
-			PWMInfo.PWMout[claw_shouder_Speed] -= 5;
-			if(PWMInfo.PWMout[claw_shouder_Speed] < 800 )
-            PWMInfo.PWMout[claw_shouder_Speed] = 800;
-			if(PWMInfo.PWMout[claw_shouder_Speed] > 2500) 
-            PWMInfo.PWMout[claw_shouder_Speed] = 2500;
-			if(PWMInfo.PWMout[claw_shouder_Speed] < 500) 
-            PWMInfo.PWMout[claw_shouder_Speed] = 500;
-		}
-        else{ ;}
+    {   //舵机传值，限幅
+		Servo_Write(&PWMInfo);
 
-        //右摇杆上下控制小臂
-        if(right_rocker == 0)
-        { 
-			
-        }
-		else if(right_rocker == 1)
-		{
-			PWMInfo.PWMout[claw_elbow_Speed] -= CLAW_STEP+8;
-			if(PWMInfo.PWMout[claw_elbow_Speed] > 2500) 
-            PWMInfo.PWMout[claw_elbow_Speed] = 2500;
-			if(PWMInfo.PWMout[claw_elbow_Speed] < 500) 
-            PWMInfo.PWMout[claw_elbow_Speed] = 500;
-		}
-		else if(right_rocker == 2)
-		{
-			PWMInfo.PWMout[claw_elbow_Speed] += CLAW_STEP+8;
-			if(PWMInfo.PWMout[claw_elbow_Speed] > 2500) 
-            PWMInfo.PWMout[claw_elbow_Speed] = 2500;
-			if(PWMInfo.PWMout[claw_elbow_Speed] < 500) 
-            PWMInfo.PWMout[claw_elbow_Speed] = 500;
-		}    
-        //摄像头云台
-        else if(right_rocker == 3)
-        {
-            PWMInfo.PWMout[light_level_1] += 15;
-            if(PWMInfo.PWMout[light_level_1] > 1790) 
-            PWMInfo.PWMout[light_level_1] = 1790;
-            // right_rocker = 0;
-        }
-        else if(right_rocker == 4)
-        {
-            PWMInfo.PWMout[light_level_1] -= 15;
-            if(PWMInfo.PWMout[light_level_1] < 1450) 
-            PWMInfo.PWMout[light_level_1] = 1450;
-            // right_rocker = 0;
-        }
-        else{ ;}
-
-		//RB和LB控制夹和松
-		if(Mode_control & 0x02)
-		{
-//			PWMInfo.PWMout[claw_catchSpeed] -= CLAW_STEP+5;
-//			if(PWMInfo.PWMout[claw_catchSpeed] < 1300) 
-            PWMInfo.PWMout[claw_catchSpeed] = 1300;
-
-		}
-		else if(Mode_control & 0x04)
-		{
-//			PWMInfo.PWMout[claw_catchSpeed] += CLAW_STEP+5;
-//			if(PWMInfo.PWMout[claw_catchSpeed] > 1900) 
-            PWMInfo.PWMout[claw_catchSpeed] = 1900;
-			// if(PWMInfo.PWMout[claw_catchSpeed] > 2500) 
-            // PWMInfo.PWMout[claw_catchSpeed] = 2500;
-			// if(PWMInfo.PWMout[claw_catchSpeed] < 500) 
-            // PWMInfo.PWMout[claw_catchSpeed] = 500;
-		}
-		else{ ;}
-		
-
-        //调试用
-        //printf("Y %d %d %d\r\n",PWMInfo.PWMout[claw_shouder_Speed],PWMInfo.PWMout[claw_elbow_Speed],PWMInfo.PWMout[claw_catchSpeed]);
-		//printf("L %d\r\n",PWMInfo.PWMout[light_level_1]);
-        //写入机械臂及灯光pwm值
+        Servo_Limit(&PWMInfo);
+  
         Task_Servo_AllStart(PWMInfo.PWMout);
-		//延时
+		
 		Drv_Delay_Ms(100);
     }
 }
 
 /* 汇报PWMout值 */
-void ReportPWMout(void* paramenter)
+void ReportPWMout(void* paramenter)     //测试推进器推力大小,调试过程用
 {
-    while(1)
+    while(1)      
     {
     //   printf("h: %d %d %d %d\r\n",
 	// 		PWMInfo.PWMout[h_wheel1_speed],
@@ -345,7 +275,7 @@ void ReportPWMout(void* paramenter)
     }
 }
 
-/* ph测试线程 */
+/* pH测试线程 */
 void pH_outcome(void* paramenter)
 {  
 	//挂起

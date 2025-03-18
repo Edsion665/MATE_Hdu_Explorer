@@ -464,6 +464,11 @@
               <FileType>1</FileType>
               <FilePath>..\Apply\Task\Src\task_pH_outcome.c</FilePath>
             </File>
+            <File>
+              <FileName>task_servocontrol.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Apply\Task\Src\task_servocontrol.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

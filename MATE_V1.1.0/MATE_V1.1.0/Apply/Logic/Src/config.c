@@ -35,7 +35,10 @@ volatile char speed_kV = 0;
 volatile char DepthFlag = 0;
 volatile char SpeedMode = 0;
 volatile char cnt = 0;
-volatile float PIDOut = 0.0;
+volatile float DepthPID_out = 0.0;
+volatile float DepthFliter = 0.0;
+volatile char PitchFlag = 0;
+volatile float PitchPID_out = 0.0;
 
 tagGPIO_T demoGPIO[] =
 {
